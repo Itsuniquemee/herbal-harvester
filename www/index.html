@@ -1,5 +1,3 @@
-# Create the main HTML file in www/
-cat > www/index.html << 'EOF'
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,6 +9,7 @@ cat > www/index.html << 'EOF'
     <meta name="theme-color" content="#10b981">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Herbal Harvester">
     
     <!-- Styles -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -20,27 +19,59 @@ cat > www/index.html << 'EOF'
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;500;700&display=swap" rel="stylesheet">
 
     <style>
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Inter', 'Noto Sans Devanagari', sans-serif;
+            -webkit-tap-highlight-color: transparent;
             margin: 0;
             padding: 0;
-            background: #f8fafc;
         }
+
         .app-screen {
             display: none;
-            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            background-color: #f8fafc;
             flex-direction: column;
+            animation: fadeIn 0.3s ease;
         }
+
         .app-screen.active {
             display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        input[type="text"], select {
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            background-color: #f9fafb;
+            width: 100%;
+            font-size: 1rem;
+        }
+
+        #cameraFeed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1);
         }
     </style>
 </head>
 <body class="bg-gray-800">
+    <!-- Mobile App Container -->
     <div class="max-w-md mx-auto h-[100dvh] bg-gray-50 shadow-2xl overflow-hidden relative">
-        
+
         <!-- Loading Screen -->
         <div id="loadingScreen" class="app-screen active flex items-center justify-center bg-emerald-700 text-white">
             <div class="text-center">
@@ -55,100 +86,490 @@ cat > www/index.html << 'EOF'
             <h1 class="text-3xl font-bold text-gray-800 text-center mb-8">Herbal Harvester</h1>
             
             <div class="grid grid-cols-2 gap-5">
-                <button onclick="showScreen('newCollectionScreen')" class="flex flex-col items-center justify-center p-6 bg-emerald-600 text-white rounded-xl shadow-lg h-36 transition-transform active:scale-95">
+                <!-- New Collection -->
+                <button onclick="initNewCollection()" class="flex flex-col items-center justify-center p-6 bg-emerald-600 text-white rounded-xl shadow-lg h-36 transition-transform active:scale-95">
                     <i class="ph-fill ph-plant text-5xl"></i>
                     <span class="text-lg font-bold mt-2">New Collection</span>
                 </button>
                 
+                <!-- My Collections -->
                 <button onclick="showScreen('collectionsScreen')" class="flex flex-col items-center justify-center p-6 bg-blue-600 text-white rounded-xl shadow-lg h-36 transition-transform active:scale-95">
                     <i class="ph-fill ph-archive-box text-5xl"></i>
                     <span class="text-lg font-bold mt-2">My Collections</span>
                 </button>
                 
+                <!-- Sync Data -->
                 <button onclick="triggerSync()" class="flex flex-col items-center justify-center p-6 bg-gray-700 text-white rounded-xl shadow-lg h-36 transition-transform active:scale-95">
                     <i class="ph-fill ph-cloud-arrow-up text-5xl"></i>
                     <span class="text-lg font-bold mt-2">Sync Data</span>
                 </button>
                 
+                <!-- Settings -->
                 <button onclick="showScreen('settingsScreen')" class="flex flex-col items-center justify-center p-6 bg-gray-400 text-gray-800 rounded-xl shadow-lg h-36 transition-transform active:scale-95">
                     <i class="ph-fill ph-gear text-5xl"></i>
                     <span class="text-lg font-bold mt-2">Settings</span>
                 </button>
             </div>
+
+            <div id="syncStatusFooter" class="text-center text-gray-500 mt-8">
+                Ready to collect herbs!
+            </div>
         </div>
 
-        <!-- Other screens would go here -->
-        
+        <!-- New Collection Screen -->
+        <div id="newCollectionScreen" class="app-screen">
+            <header class="flex-shrink-0 flex items-center p-4 border-b bg-white">
+                <button onclick="showScreen('homeScreen')" class="p-2 rounded-full hover:bg-gray-100">
+                    <i class="ph ph-arrow-left text-2xl text-gray-700"></i>
+                </button>
+                <h1 class="text-xl font-bold text-gray-800 ml-4">New Collection</h1>
+            </header>
+            
+            <div class="flex-1 p-4 space-y-4 overflow-y-auto">
+                <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <h2 class="font-bold text-emerald-800 mb-3">Automatic Data</h2>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">📍 GPS Coordinates</label>
+                            <input type="text" id="gpsInput" placeholder="Click camera to get location" disabled>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">🕒 Time & Date</label>
+                            <input type="text" id="timestampInput" placeholder="Click camera to get time" disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 bg-white border border-gray-200 rounded-lg">
+                    <h2 class="font-bold text-gray-800 mb-3">Collection Details</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="speciesInput" class="block text-sm font-medium text-gray-700 mb-1">🌿 Herb Name</label>
+                            <select id="speciesInput">
+                                <option value="">Select Species</option>
+                                <option value="Ashwagandha">Ashwagandha</option>
+                                <option value="Tulsi">Tulsi (Holy Basil)</option>
+                                <option value="Brahmi">Brahmi</option>
+                                <option value="Amla">Amla</option>
+                                <option value="Neem">Neem</option>
+                                <option value="Guduchi">Guduchi (Giloy)</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="weatherInput" class="block text-sm font-medium text-gray-700 mb-1">🌦️ Weather (Optional)</label>
+                            <select id="weatherInput">
+                                <option value="">Select Condition</option>
+                                <option value="Sunny">Sunny</option>
+                                <option value="Cloudy">Cloudy</option>
+                                <option value="Rainy">Rainy</option>
+                                <option value="Humid">Humid</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">📷 Photo Evidence</label>
+                            <button onclick="startCamera()" class="w-full p-3 bg-blue-600 text-white rounded-lg font-semibold flex items-center justify-center shadow hover:bg-blue-700 active:bg-blue-800">
+                                <i class="ph ph-camera text-xl mr-2"></i>
+                                <span>Open Camera to Add Photo</span>
+                            </button>
+                            <input type="hidden" id="photoBase64Input">
+                            <img id="photoPreview" src="" alt="Photo preview" class="hidden mt-4 rounded-lg border border-gray-300 w-full object-cover max-h-64">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <footer class="flex-shrink-0 p-4 border-t bg-white">
+                <button onclick="saveCollection()" class="w-full bg-emerald-600 text-white p-4 rounded-lg font-bold text-lg flex items-center justify-center shadow-lg hover:bg-emerald-700 active:bg-emerald-800">
+                    <i class="ph ph-download-simple text-2xl mr-2"></i>
+                    <span>Save Collection</span>
+                </button>
+            </footer>
+        </div>
+
+        <!-- My Collections Screen -->
+        <div id="collectionsScreen" class="app-screen">
+            <header class="flex-shrink-0 flex items-center p-4 border-b bg-white">
+                <button onclick="showScreen('homeScreen')" class="p-2 rounded-full hover:bg-gray-100">
+                    <i class="ph ph-arrow-left text-2xl text-gray-700"></i>
+                </button>
+                <h1 class="text-xl font-bold text-gray-800 ml-4">My Collections</h1>
+            </header>
+            
+            <div id="collectionListContainer" class="flex-1 overflow-y-auto bg-white p-4">
+                <p class="text-center text-gray-500 py-8">No collections yet. Start by creating your first collection!</p>
+            </div>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settingsScreen" class="app-screen flex flex-col">
+            <div class="flex-1 p-4">
+                <h1 class="text-2xl font-bold text-gray-800 mb-6">Settings</h1>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="wifiOnlyInput" class="h-5 w-5 rounded text-emerald-600 focus:ring-emerald-500">
+                            <span class="text-gray-700">Sync only on Wi-Fi</span>
+                        </label>
+                    </div>
+                    
+                    <div>
+                        <label for="languageSelect" class="block text-sm font-medium text-gray-700 mb-1">Language</label>
+                        <select id="languageSelect">
+                            <option value="en">English</option>
+                            <option value="hi">हिंदी (Hindi)</option>
+                        </select>
+                    </div>
+
+                    <div class="p-4 bg-gray-100 rounded-lg">
+                        <h3 class="font-bold text-gray-800 mb-2">About</h3>
+                        <p class="text-sm text-gray-600">Herbal Harvester v1.0.0</p>
+                        <p class="text-sm text-gray-600">Offline-first herbal collection app</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex-shrink-0 p-4 border-t bg-white">
+                <button onclick="showScreen('homeScreen')" class="w-full bg-emerald-600 text-white p-4 rounded-lg font-bold text-lg flex items-center justify-center shadow-lg hover:bg-emerald-700 active:bg-emerald-800">
+                    <i class="ph ph-check-circle text-2xl mr-2"></i>
+                    <span>Save Settings</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Camera Screen -->
+        <div id="cameraScreen" class="app-screen bg-gray-900 overflow-hidden">
+            <video id="cameraFeed" autoplay playsinline class="absolute top-0 left-0 w-full h-full object-cover"></video>
+
+            <div class="absolute top-4 left-4 p-3 bg-black bg-opacity-50 text-white rounded-lg text-sm">
+                <div id="cameraGpsDisplay" class="font-medium">📍 Getting location...</div>
+                <div id="cameraTimestampDisplay" class="font-medium mt-1">🕒 Getting time...</div>
+            </div>
+
+            <div class="absolute bottom-0 left-0 w-full p-6 flex justify-center items-center bg-gradient-to-t from-black via-black/70 to-transparent">
+                <button onclick="takePhoto()" class="w-20 h-20 rounded-full bg-white flex items-center justify-center shadow-2xl transition-transform active:scale-110">
+                    <div class="w-16 h-16 rounded-full border-4 border-gray-900 bg-white"></div>
+                </button>
+
+                <button onclick="cancelCamera()" class="absolute right-8 text-white text-sm font-medium py-2 px-4 rounded-full bg-black bg-opacity-30">
+                    Cancel
+                </button>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="absolute bottom-4 left-4 right-4 p-4 rounded-lg shadow-xl text-white text-center font-medium transition-all duration-300 translate-y-20 opacity-0 z-50">
+        </div>
+
     </div>
 
+    <!-- Hidden canvas for photo processing -->
+    <canvas id="photoCanvas" class="hidden"></canvas>
+
     <script>
+        // App State
+        const DB_KEY = 'herbalCollectionDB';
+        const SETTINGS_KEY = 'herbalAppSettings';
+        
+        let localDB = [];
+        let appSettings = {
+            syncWifiOnly: false,
+            language: 'en'
+        };
+
+        let currentStream = null;
+
+        // Utility Functions
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
         function showScreen(screenId) {
             document.querySelectorAll('.app-screen').forEach(screen => {
                 screen.classList.remove('active');
             });
-            document.getElementById(screenId).classList.add('active');
+            const activeScreen = document.getElementById(screenId);
+            if (activeScreen) {
+                activeScreen.classList.add('active');
+            }
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = 'absolute bottom-4 left-4 right-4 p-4 rounded-lg shadow-xl text-white text-center font-medium transition-all duration-300 z-50';
+            
+            toast.classList.add(isError ? 'bg-red-600' : 'bg-gray-900');
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Database Functions
+        function loadDB() {
+            localDB = JSON.parse(localStorage.getItem(DB_KEY)) || [];
+        }
+
+        function saveDB() {
+            localStorage.setItem(DB_KEY, JSON.stringify(localDB));
+            updateSyncStatusFooter();
+        }
+
+        function loadSettings() {
+            const storedSettings = localStorage.getItem(SETTINGS_KEY);
+            if (storedSettings) {
+                appSettings = JSON.parse(storedSettings);
+                document.getElementById('wifiOnlyInput').checked = appSettings.syncWifiOnly || false;
+                document.getElementById('languageSelect').value = appSettings.language || 'en';
+            }
+        }
+
+        function saveSettings() {
+            appSettings.syncWifiOnly = document.getElementById('wifiOnlyInput').checked;
+            appSettings.language = document.getElementById('languageSelect').value;
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(appSettings));
+            showToast('Settings saved successfully!');
+            showScreen('homeScreen');
+        }
+
+        function updateSyncStatusFooter() {
+            const pendingCount = localDB.filter(item => item.status === 'pending').length;
+            const footer = document.getElementById('syncStatusFooter');
+            if (footer) {
+                if (pendingCount > 0) {
+                    footer.innerHTML = `🟡 <span class="font-medium">${pendingCount} record(s) pending sync</span>`;
+                } else {
+                    footer.innerHTML = `🟢 All records synced`;
+                }
+            }
+        }
+
+        // Collection Functions
+        function initNewCollection() {
+            // Reset form
+            document.getElementById('speciesInput').value = '';
+            document.getElementById('weatherInput').value = '';
+            document.getElementById('photoBase64Input').value = '';
+            document.getElementById('photoPreview').classList.add('hidden');
+            document.getElementById('photoPreview').src = '';
+            document.getElementById('gpsInput').value = '';
+            document.getElementById('timestampInput').value = '';
+            
+            showScreen('newCollectionScreen');
+        }
+
+        async function startCamera() {
+            showScreen('cameraScreen');
+            fetchAndDisplayCameraMetadata();
+
+            const video = document.getElementById('cameraFeed');
+            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+                try {
+                    currentStream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: 'environment' } 
+                    });
+                    video.srcObject = currentStream;
+                } catch (err) {
+                    console.error("Camera Error:", err);
+                    showToast('Could not access camera. Check permissions.', true);
+                    showScreen('newCollectionScreen');
+                }
+            } else {
+                showToast('Camera not supported on this device.', true);
+                showScreen('newCollectionScreen');
+            }
+        }
+
+        function fetchAndDisplayCameraMetadata() {
+            const gpsEl = document.getElementById('cameraGpsDisplay');
+            const timeEl = document.getElementById('cameraTimestampDisplay');
+
+            // Time
+            const now = new Date();
+            const localTimeString = now.toLocaleString();
+            timeEl.textContent = `🕒 ${localTimeString}`;
+            timeEl.dataset.isoValue = now.toISOString();
+
+            // GPS
+            gpsEl.textContent = '📍 Getting location...';
+            
+            if ('geolocation' in navigator) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        const gpsString = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+                        gpsEl.textContent = `📍 ${gpsString}`;
+                    },
+                    (error) => {
+                        gpsEl.textContent = '📍 Location unavailable';
+                    },
+                    { enableHighAccuracy: true, timeout: 10000 }
+                );
+            } else {
+                gpsEl.textContent = '📍 GPS not supported';
+            }
+        }
+
+        function stopCameraFeed() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+        }
+
+        function cancelCamera() {
+            stopCameraFeed();
+            showScreen('newCollectionScreen');
+        }
+
+        function takePhoto() {
+            const video = document.getElementById('cameraFeed');
+            const canvas = document.getElementById('photoCanvas');
+            const context = canvas.getContext('2d');
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const base64Data = canvas.toDataURL('image/jpeg', 0.8);
+
+            stopCameraFeed();
+
+            // Populate form with captured data
+            document.getElementById('photoBase64Input').value = base64Data;
+            document.getElementById('photoPreview').src = base64Data;
+            document.getElementById('photoPreview').classList.remove('hidden');
+
+            const cameraGpsText = document.getElementById('cameraGpsDisplay').textContent.replace('📍 ', '');
+            const cameraTimeText = document.getElementById('cameraTimestampDisplay').textContent.replace('🕒 ', '');
+            const cameraTimeISO = document.getElementById('cameraTimestampDisplay').dataset.isoValue;
+            
+            document.getElementById('gpsInput').value = cameraGpsText;
+            document.getElementById('timestampInput').value = cameraTimeText;
+
+            showScreen('newCollectionScreen');
+        }
+
+        function saveCollection() {
+            const species = document.getElementById('speciesInput').value;
+            if (!species) {
+                showToast('Please select a herb name.', true);
+                return;
+            }
+            
+            const base64Photo = document.getElementById('photoBase64Input').value;
+            if (!base64Photo) {
+                showToast('Please take a photo.', true);
+                return;
+            }
+            
+            const gpsCoords = document.getElementById('gpsInput').value.split(',');
+            const timestamp = document.getElementById('timestampInput').value;
+
+            const collection = {
+                id: generateUUID(),
+                species: species,
+                weather: document.getElementById('weatherInput').value || "Not specified",
+                timestamp: timestamp,
+                location: {
+                    latitude: gpsCoords[0] ? gpsCoords[0].trim() : "N/A",
+                    longitude: gpsCoords[1] ? gpsCoords[1].trim() : "N/A"
+                },
+                photo: base64Photo,
+                status: 'pending',
+                createdAt: new Date().toISOString()
+            };
+
+            localDB.unshift(collection);
+            saveDB();
+
+            showToast('Collection saved locally!');
+            showScreen('homeScreen');
+        }
+
+        function renderCollections() {
+            const container = document.getElementById('collectionListContainer');
+            
+            if (localDB.length === 0) {
+                container.innerHTML = '<p class="text-center text-gray-500 py-8">No collections yet. Start by creating your first collection!</p>';
+                return;
+            }
+            
+            container.innerHTML = localDB.map(item => {
+                const isPending = item.status === 'pending';
+                const statusClass = isPending ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800';
+                const statusText = isPending ? 'Pending' : 'Synced';
+                
+                return `
+                <div class="flex items-center p-4 border-b hover:bg-gray-50 cursor-pointer" onclick="showCollectionDetail('${item.id}')">
+                    <div class="p-3 bg-emerald-100 text-emerald-700 rounded-full">
+                        <i class="ph-fill ph-plant text-2xl"></i>
+                    </div>
+                    <div class="flex-1 ml-4">
+                        <p class="font-bold text-lg text-gray-800">${item.species}</p>
+                        <p class="text-sm text-gray-500">${new Date(item.timestamp).toLocaleString()}</p>
+                    </div>
+                    <span class="flex-shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusClass}">
+                        ${statusText}
+                    </span>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function showCollectionDetail(id) {
+            const item = localDB.find(i => i.id === id);
+            if (!item) return;
+
+            const photoHtml = item.photo 
+                ? `<img src="${item.photo}" alt="${item.species}" class="w-full rounded-lg shadow-md object-cover mb-4 max-h-64">` 
+                : `<p class="text-center text-gray-500 p-4 bg-gray-100 rounded-lg">No photo available</p>`;
+
+            alert(`Collection Details:\n\nSpecies: ${item.species}\nWeather: ${item.weather}\nLocation: ${item.location.latitude}, ${item.location.longitude}\nTime: ${item.timestamp}`);
         }
 
         function triggerSync() {
-            alert('Sync functionality will be added!');
+            showToast('Sync functionality would upload pending records to server');
+            // Simulate sync
+            setTimeout(() => {
+                localDB.forEach(item => {
+                    if (item.status === 'pending') {
+                        item.status = 'synced';
+                    }
+                });
+                saveDB();
+                showToast('Sync completed!');
+            }, 2000);
         }
 
-        // Simulate loading
-        setTimeout(() => {
-            showScreen('homeScreen');
-        }, 2000);
+        // Initialize app
+        function initApp() {
+            loadDB();
+            loadSettings();
+            updateSyncStatusFooter();
+            
+            // Hide loading screen after 2 seconds
+            setTimeout(() => {
+                showScreen('homeScreen');
+            }, 2000);
+
+            // Update collections screen when shown
+            document.getElementById('collectionsScreen').addEventListener('click', function() {
+                renderCollections();
+            });
+        }
+
+        // Start the app
+        document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
 </html>
-EOF
-
-# Create manifest.json
-cat > www/manifest.json << 'EOF'
-{
-  "name": "Herbal Harvester",
-  "short_name": "HerbalHarvester",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#166534",
-  "theme_color": "#10b981",
-  "icons": [
-    {
-      "src": "assets/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    },
-    {
-      "src": "assets/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png"
-    }
-  ]
-}
-EOF
-
-# Create assets directory for icons
-mkdir -p www/assets
-
-# Create a simple service worker
-cat > www/sw.js << 'EOF'
-const CACHE_NAME = 'herbal-harvester-v1';
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json'
-];
-
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(urlsToCache))
-  );
-});
-
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => response || fetch(event.request))
-  );
-});
-EOF
