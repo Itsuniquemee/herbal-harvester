@@ -22,6 +22,12 @@ jobs:
       - name: Install dependencies
         run: npm install
         
+      - name: Set Java compatibility
+        run: |
+          # Set Java 17 compatibility in Gradle
+          echo "android.compileOptions.sourceCompatibility = 1.8" >> android/app/build.gradle
+          echo "android.compileOptions.targetCompatibility = 1.8" >> android/app/build.gradle
+          
       - name: Sync Capacitor and Build APK
         run: |
           npx cap sync
