@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">HerbalHarvester</string>
+    <string name="title_activity_main">HerbalHarvester</string>
+    <string name="package_name">com.herbal.harvester</string>
+    <string name="custom_url_scheme">com.herbal.harvester</string>
+</resources>

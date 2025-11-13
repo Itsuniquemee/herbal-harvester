@@ -1,0 +1,154 @@
+# Create the main HTML file in www/
+cat > www/index.html << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Herbal Harvester</title>
+
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#10b981">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    
+    <!-- Styles -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f8fafc;
+        }
+        .app-screen {
+            display: none;
+            height: 100vh;
+            flex-direction: column;
+        }
+        .app-screen.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="bg-gray-800">
+    <div class="max-w-md mx-auto h-[100dvh] bg-gray-50 shadow-2xl overflow-hidden relative">
+        
+        <!-- Loading Screen -->
+        <div id="loadingScreen" class="app-screen active flex items-center justify-center bg-emerald-700 text-white">
+            <div class="text-center">
+                <i class="ph-fill ph-leaf text-6xl opacity-50"></i>
+                <h1 class="text-3xl font-bold mt-4">Herbal Harvester</h1>
+                <p class="text-lg opacity-80 mt-2">Loading...</p>
+            </div>
+        </div>
+
+        <!-- Home Screen -->
+        <div id="homeScreen" class="app-screen p-6 justify-center">
+            <h1 class="text-3xl font-bold text-gray-800 text-center mb-8">Herbal Harvester</h1>
+            
+            <div class="grid grid-cols-2 gap-5">
+                <button onclick="showScreen('newCollectionScreen')" class="flex flex-col items-center justify-center p-6 bg-emerald-600 text-white rounded-xl shadow-lg h-36 transition-transform active:scale-95">
+                    <i class="ph-fill ph-plant text-5xl"></i>
+                    <span class="text-lg font-bold mt-2">New Collection</span>
+                </button>
+                
+                <button onclick="showScreen('collectionsScreen')" class="flex flex-col items-center justify-center p-6 bg-blue-600 text-white rounded-xl shadow-lg h-36 transition-transform active:scale-95">
+                    <i class="ph-fill ph-archive-box text-5xl"></i>
+                    <span class="text-lg font-bold mt-2">My Collections</span>
+                </button>
+                
+                <button onclick="triggerSync()" class="flex flex-col items-center justify-center p-6 bg-gray-700 text-white rounded-xl shadow-lg h-36 transition-transform active:scale-95">
+                    <i class="ph-fill ph-cloud-arrow-up text-5xl"></i>
+                    <span class="text-lg font-bold mt-2">Sync Data</span>
+                </button>
+                
+                <button onclick="showScreen('settingsScreen')" class="flex flex-col items-center justify-center p-6 bg-gray-400 text-gray-800 rounded-xl shadow-lg h-36 transition-transform active:scale-95">
+                    <i class="ph-fill ph-gear text-5xl"></i>
+                    <span class="text-lg font-bold mt-2">Settings</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Other screens would go here -->
+        
+    </div>
+
+    <script>
+        function showScreen(screenId) {
+            document.querySelectorAll('.app-screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function triggerSync() {
+            alert('Sync functionality will be added!');
+        }
+
+        // Simulate loading
+        setTimeout(() => {
+            showScreen('homeScreen');
+        }, 2000);
+    </script>
+</body>
+</html>
+EOF
+
+# Create manifest.json
+cat > www/manifest.json << 'EOF'
+{
+  "name": "Herbal Harvester",
+  "short_name": "HerbalHarvester",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#166534",
+  "theme_color": "#10b981",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
+EOF
+
+# Create assets directory for icons
+mkdir -p www/assets
+
+# Create a simple service worker
+cat > www/sw.js << 'EOF'
+const CACHE_NAME = 'herbal-harvester-v1';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/manifest.json'
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(urlsToCache))
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => response || fetch(event.request))
+  );
+});
+EOF
