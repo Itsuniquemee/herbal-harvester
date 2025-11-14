@@ -203,31 +203,212 @@
             </div>
         </div>
 
-        <!-- Settings Screen -->
-        <div id="settingsScreen" class="app-screen flex flex-col">
-            <div class="flex-1 p-4">
-                <h1 class="text-2xl font-bold text-gray-800 mb-6">Settings</h1>
-                
-                <div class="space-y-4">
+        <!-- Login Screen -->
+        <div id="loginScreen" class="app-screen flex flex-col">
+            <div class="p-6 text-center">
+                <div class="mb-8">
+                    <i class="ph-fill ph-plant text-6xl text-emerald-600 mb-4 block"></i>
+                    <h1 class="text-2xl font-bold text-gray-800">Herbal Harvester</h1>
+                    <p class="text-gray-600 mt-2">Digital collection tracking for rural farmers</p>
+                </div>
+
+                <form id="loginForm" class="space-y-4">
+                    <div class="text-left">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Collector ID</label>
+                        <input type="text" id="loginUserId" required 
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                               placeholder="Enter your collector ID">
+                    </div>
+                    
+                    <div class="text-left">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="loginPassword" required 
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                               placeholder="Enter your password">
+                    </div>
+
+                    <button type="submit" class="w-full bg-emerald-600 text-white p-3 rounded-lg font-bold text-lg shadow-lg hover:bg-emerald-700 active:bg-emerald-800">
+                        <i class="ph-fill ph-sign-in mr-2"></i>
+                        Login
+                    </button>
+                </form>
+
+                <div class="mt-6 text-center">
+                    <p class="text-gray-600">Don't have an account?</p>
+                    <button onclick="screenManager.showScreen('registerScreen')" class="text-emerald-600 font-semibold hover:text-emerald-700">
+                        Register here
+                    </button>
+                </div>
+
+                <div class="mt-8 text-xs text-gray-500">
+                    <button onclick="continueWithoutAuth()" class="text-blue-600 underline">
+                        Continue without login (offline only)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Registration Screen -->
+        <div id="registerScreen" class="app-screen flex flex-col">
+            <div class="bg-white border-b border-gray-200 px-4 py-3 flex items-center">
+                <button onclick="screenManager.showScreen('loginScreen')" class="text-gray-600 hover:text-gray-800">
+                    <i class="ph ph-arrow-left text-xl"></i>
+                </button>
+                <h2 class="ml-3 text-lg font-semibold text-gray-800">Register</h2>
+            </div>
+
+            <div class="flex-1 p-4 overflow-y-auto">
+                <form id="registerForm" class="space-y-4">
                     <div>
-                        <label class="flex items-center space-x-2">
-                            <input type="checkbox" id="wifiOnlyInput" class="h-5 w-5 rounded text-emerald-600 focus:ring-emerald-500">
-                            <span class="text-gray-700">Sync only on Wi-Fi</span>
-                        </label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Collector ID</label>
+                        <input type="text" id="registerUserId" required 
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                               placeholder="Choose a unique ID (e.g., RAM001)">
                     </div>
                     
                     <div>
-                        <label for="languageSelect" class="block text-sm font-medium text-gray-700 mb-1">Language</label>
-                        <select id="languageSelect">
-                            <option value="en">English</option>
-                            <option value="hi">हिंदी (Hindi)</option>
-                        </select>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                        <input type="text" id="registerName" required 
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                               placeholder="Enter your full name">
                     </div>
 
-                    <div class="p-4 bg-gray-100 rounded-lg">
-                        <h3 class="font-bold text-gray-800 mb-2">About</h3>
-                        <p class="text-sm text-gray-600">Herbal Harvester v1.0.0</p>
-                        <p class="text-sm text-gray-600">Offline-first herbal collection app</p>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mobile Number</label>
+                        <input type="tel" id="registerPhone" required pattern="[6-9][0-9]{9}"
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                               placeholder="10-digit mobile number">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Village</label>
+                        <input type="text" id="registerVillage" required 
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                               placeholder="Your village name">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">District</label>
+                        <input type="text" id="registerDistrict" required 
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                               placeholder="Your district">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">State</label>
+                        <input type="text" id="registerState" required 
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                               placeholder="Your state">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" id="registerPassword" required minlength="6"
+                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                               placeholder="Minimum 6 characters">
+                    </div>
+
+                    <button type="submit" class="w-full bg-emerald-600 text-white p-3 rounded-lg font-bold text-lg shadow-lg hover:bg-emerald-700 active:bg-emerald-800">
+                        <i class="ph-fill ph-user-plus mr-2"></i>
+                        Register
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settingsScreen" class="app-screen flex flex-col">
+            <div class="bg-white border-b border-gray-200 px-4 py-3 flex items-center">
+                <button onclick="screenManager.showScreen('homeScreen')" class="text-gray-600 hover:text-gray-800">
+                    <i class="ph ph-arrow-left text-xl"></i>
+                </button>
+                <h2 class="ml-3 text-lg font-semibold text-gray-800">Settings</h2>
+            </div>
+            
+            <div class="flex-1 p-4 overflow-y-auto">
+                <div class="space-y-4">
+                    <div class="bg-white rounded-lg p-4 shadow-sm border">
+                        <h3 class="font-semibold text-gray-800 mb-3">Account Information</h3>
+                        <div class="space-y-2 text-sm text-gray-600">
+                            <div class="flex justify-between">
+                                <span>Collector ID:</span>
+                                <span id="settingsCollectorId" class="font-mono">Not logged in</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Name:</span>
+                                <span id="settingsCollectorName">Guest User</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Village:</span>
+                                <span id="settingsVillage">-</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Status:</span>
+                                <span id="settingsAuthStatus" class="text-orange-600">Offline Mode</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4">
+                            <button id="authButton" onclick="handleAuthAction()" class="w-full bg-emerald-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-emerald-700">
+                                Login
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg p-4 shadow-sm border">
+                        <h3 class="font-semibold text-gray-800 mb-3">App Settings</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-700">Sync only on Wi-Fi</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="wifiOnlyInput" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-emerald-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                                </label>
+                            </div>
+                            
+                            <div>
+                                <label for="languageSelect" class="block text-sm font-medium text-gray-700 mb-1">Language</label>
+                                <select id="languageSelect" class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500">
+                                    <option value="en">English</option>
+                                    <option value="hi">हिंदी (Hindi)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg p-4 shadow-sm border">
+                        <h3 class="font-semibold text-gray-800 mb-3">Storage</h3>
+                        <div class="space-y-2 text-sm text-gray-600">
+                            <div class="flex justify-between">
+                                <span>Local Collections:</span>
+                                <span id="storageCollectionCount">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Storage Used:</span>
+                                <span id="storageUsed">0 MB</span>
+                            </div>
+                        </div>
+                        <button onclick="clearLocalData()" class="w-full mt-3 bg-red-600 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-red-700">
+                            Clear Local Data
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-lg p-4 shadow-sm border">
+                        <h3 class="font-semibold text-gray-800 mb-3">About</h3>
+                        <div class="space-y-2 text-sm text-gray-600">
+                            <div class="flex justify-between">
+                                <span>Version:</span>
+                                <span>1.0.0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Type:</span>
+                                <span>PWA (Offline-first)</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Backend:</span>
+                                <span id="backendStatus">Checking...</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -282,6 +463,10 @@
 
         let currentStream = null;
         let isAppInitialized = false;
+        let permissionsGranted = {
+            camera: false,
+            location: false
+        };
 
         // Enhanced Screen Management System
         class ScreenManager {
@@ -359,6 +544,330 @@
         // Create global screen manager instance
         const screenManager = new ScreenManager();
 
+        // API Configuration
+        const API_CONFIG = {
+            baseURL: 'http://localhost:3000/api/v1',
+            timeout: 30000,
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        };
+
+        // API Helper Functions
+        const apiCall = async (endpoint, options = {}) => {
+            const token = localStorage.getItem('authToken');
+            const config = {
+                method: 'GET',
+                headers: {
+                    ...API_CONFIG.headers,
+                    ...(token && { 'Authorization': `Bearer ${token}` })
+                },
+                ...options
+            };
+
+            try {
+                const response = await fetch(`${API_CONFIG.baseURL}${endpoint}`, config);
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.message || data.error || 'API request failed');
+                }
+                
+                return data;
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
+            }
+        };
+
+        // Auth API Functions
+        const authAPI = {
+            async login(userId, password) {
+                return apiCall('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ userId, password })
+                });
+            },
+
+            async register(userData) {
+                return apiCall('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify(userData)
+                });
+            },
+
+            async verifyToken() {
+                return apiCall('/auth/verify');
+            }
+        };
+
+        // Collections API Functions
+        const collectionsAPI = {
+            async uploadCollection(collectionData, photoFile) {
+                const token = localStorage.getItem('authToken');
+                const formData = new FormData();
+                
+                // Add collection data to form
+                Object.keys(collectionData).forEach(key => {
+                    if (key !== 'photo') {
+                        formData.append(key, collectionData[key]);
+                    }
+                });
+                
+                // Add photo file
+                if (photoFile) {
+                    formData.append('photo', photoFile);
+                }
+
+                const response = await fetch(`${API_CONFIG.baseURL}/collections`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.message || data.error || 'Upload failed');
+                }
+
+                return data;
+            },
+
+            async getCollections(page = 1, limit = 20) {
+                return apiCall(`/collections?page=${page}&limit=${limit}`);
+            },
+
+            async getStats() {
+                return apiCall('/collections/stats/summary');
+            }
+        };
+
+        // Sync API Functions
+        const syncAPI = {
+            async bulkSync(collections) {
+                return apiCall('/sync/bulk', {
+                    method: 'POST',
+                    body: JSON.stringify({ collections })
+                });
+            },
+
+            async getSyncStatus() {
+                return apiCall('/sync/status');
+            },
+
+            async getSyncReport() {
+                return apiCall('/sync/report');
+            }
+        };
+
+        // Permission Management System
+        class PermissionManager {
+            constructor() {
+                this.permissions = {
+                    camera: { granted: false, requested: false },
+                    geolocation: { granted: false, requested: false }
+                };
+            }
+
+            async requestAllPermissions() {
+                console.log('Requesting all required permissions...');
+                
+                try {
+                    const results = await Promise.allSettled([
+                        this.requestCameraPermission(),
+                        this.requestLocationPermission()
+                    ]);
+
+                    const cameraResult = results[0];
+                    const locationResult = results[1];
+
+                    console.log('Permission results:', {
+                        camera: cameraResult.status,
+                        location: locationResult.status
+                    });
+
+                    return {
+                        camera: cameraResult.status === 'fulfilled' && cameraResult.value,
+                        location: locationResult.status === 'fulfilled' && locationResult.value
+                    };
+                } catch (error) {
+                    console.error('Error requesting permissions:', error);
+                    return { camera: false, location: false };
+                }
+            }
+
+            async requestCameraPermission() {
+                if (this.permissions.camera.granted) {
+                    return true;
+                }
+
+                this.permissions.camera.requested = true;
+
+                try {
+                    // Check if MediaDevices API is supported
+                    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                        throw new Error('Camera not supported on this device');
+                    }
+
+                    // Request camera permission by attempting to get media stream
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        video: { facingMode: 'environment' } 
+                    });
+                    
+                    // Stop the stream immediately - we just needed permission
+                    stream.getTracks().forEach(track => track.stop());
+                    
+                    this.permissions.camera.granted = true;
+                    console.log('Camera permission granted');
+                    return true;
+
+                } catch (error) {
+                    console.error('Camera permission denied:', error);
+                    this.permissions.camera.granted = false;
+                    
+                    let message = 'Camera access denied. ';
+                    switch(error.name) {
+                        case 'NotAllowedError':
+                            message += 'Please enable camera permission in your browser settings.';
+                            break;
+                        case 'NotFoundError':
+                            message += 'No camera found on this device.';
+                            break;
+                        case 'NotSupportedError':
+                            message += 'Camera not supported on this device.';
+                            break;
+                        default:
+                            message += error.message;
+                    }
+                    
+                    showToast(message, true);
+                    return false;
+                }
+            }
+
+            async requestLocationPermission() {
+                if (this.permissions.geolocation.granted) {
+                    return true;
+                }
+
+                this.permissions.geolocation.requested = true;
+
+                return new Promise((resolve) => {
+                    if (!navigator.geolocation) {
+                        console.error('Geolocation not supported');
+                        showToast('Location services not supported on this device.', true);
+                        resolve(false);
+                        return;
+                    }
+
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            console.log('Location permission granted');
+                            this.permissions.geolocation.granted = true;
+                            resolve(true);
+                        },
+                        (error) => {
+                            console.error('Location permission denied:', error);
+                            this.permissions.geolocation.granted = false;
+                            
+                            let message = 'Location access denied. ';
+                            switch(error.code) {
+                                case error.PERMISSION_DENIED:
+                                    message += 'Please enable location permission in your browser settings.';
+                                    break;
+                                case error.POSITION_UNAVAILABLE:
+                                    message += 'Location information unavailable.';
+                                    break;
+                                case error.TIMEOUT:
+                                    message += 'Location request timed out.';
+                                    break;
+                                default:
+                                    message += error.message;
+                            }
+                            
+                            showToast(message, true);
+                            resolve(false);
+                        },
+                        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+                    );
+                });
+            }
+
+            async checkPermissionStatus() {
+                try {
+                    // Check camera permission
+                    if (navigator.permissions) {
+                        const cameraPermission = await navigator.permissions.query({ name: 'camera' });
+                        this.permissions.camera.granted = cameraPermission.state === 'granted';
+                        
+                        const locationPermission = await navigator.permissions.query({ name: 'geolocation' });
+                        this.permissions.geolocation.granted = locationPermission.state === 'granted';
+                    }
+                } catch (error) {
+                    console.log('Permission API not fully supported, will check on demand');
+                }
+                
+                return {
+                    camera: this.permissions.camera.granted,
+                    location: this.permissions.geolocation.granted
+                };
+            }
+
+            showPermissionPrompt() {
+                return new Promise((resolve) => {
+                    const promptHTML = `
+                        <div id="permissionModal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+                            <div class="bg-white rounded-xl max-w-md w-full p-6 text-center">
+                                <i class="ph-fill ph-shield-check text-6xl text-emerald-600 mb-4"></i>
+                                <h2 class="text-2xl font-bold text-gray-800 mb-3">Permissions Required</h2>
+                                <p class="text-gray-600 mb-6">This app needs access to:</p>
+                                
+                                <div class="space-y-3 text-left mb-6">
+                                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                        <i class="ph-fill ph-camera text-xl text-blue-600"></i>
+                                        <div>
+                                            <div class="font-medium">Camera</div>
+                                            <div class="text-sm text-gray-600">Take photos of herb collections</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                        <i class="ph-fill ph-map-pin text-xl text-red-600"></i>
+                                        <div>
+                                            <div class="font-medium">Location</div>
+                                            <div class="text-sm text-gray-600">Record GPS coordinates for traceability</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex gap-3">
+                                    <button onclick="handlePermissionResponse(false)" class="flex-1 px-4 py-3 bg-gray-300 text-gray-700 rounded-lg font-medium">
+                                        Later
+                                    </button>
+                                    <button onclick="handlePermissionResponse(true)" class="flex-1 px-4 py-3 bg-emerald-600 text-white rounded-lg font-medium">
+                                        Allow Access
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    document.body.insertAdjacentHTML('beforeend', promptHTML);
+                    
+                    window.handlePermissionResponse = (allow) => {
+                        document.getElementById('permissionModal').remove();
+                        delete window.handlePermissionResponse;
+                        resolve(allow);
+                    };
+                });
+            }
+        }
+
+        // Create global permission manager
+        const permissionManager = new PermissionManager();
+
         // Global navigation function (used by onclick handlers)
         function showScreen(screenId) {
             return screenManager.showScreen(screenId);
@@ -370,6 +879,37 @@
                 var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
                 return v.toString(16);
             });
+        }
+
+        // API Functions
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_CONFIG.baseURL}${endpoint}`;
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            };
+
+            try {
+                const response = await fetch(url, config);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                return await response.json();
+            } catch (error) {
+                console.error(`API request failed for ${endpoint}:`, error);
+                
+                // Check if it's a network error (offline)
+                if (!navigator.onLine) {
+                    throw new Error('OFFLINE');
+                }
+                
+                throw error;
+            }
         }
 
         function showToast(message, isError = false) {
@@ -606,7 +1146,7 @@
             alert(`Collection Details:\n\n${details}`);
         }
 
-        function triggerSync() {
+        async function triggerSync() {
             const pendingRecords = localDB.filter(item => item.status === 'pending');
             
             if (pendingRecords.length === 0) {
@@ -614,28 +1154,215 @@
                 return;
             }
             
+            // Check if user is authenticated
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showToast('Please login to sync your collections.', true);
+                return;
+            }
+            
             showToast(`Syncing ${pendingRecords.length} record(s)...`);
             
-            // Simulate sync process
-            setTimeout(() => {
-                try {
+            try {
+                // Prepare collections for bulk sync
+                const collectionsToSync = pendingRecords.map(item => ({
+                    id: item.id,
+                    species: item.species,
+                    weather: item.weather,
+                    timestamp: item.timestamp,
+                    latitude: parseFloat(item.location.latitude),
+                    longitude: parseFloat(item.location.longitude),
+                    base64Photo: item.photo
+                }));
+
+                // Call the bulk sync API
+                const response = await syncAPI.bulkSync(collectionsToSync);
+                
+                // Update local status based on API response
+                if (response.summary.successful > 0) {
                     for (const item of localDB) {
                         if (item.status === 'pending') {
-                            item.status = 'synced';
-                            item.syncedAt = new Date().toISOString();
+                            const wasSynced = response.results.successful.find(s => s.id === item.id);
+                            if (wasSynced) {
+                                item.status = 'synced';
+                                item.syncedAt = new Date().toISOString();
+                            }
                         }
                     }
                     saveDB();
-                    showToast(`Successfully synced ${pendingRecords.length} record(s)!`);
-                } catch (error) {
-                    console.error('Sync error:', error);
-                    showToast('Sync failed. Will retry later.', true);
                 }
-            }, 2000);
+
+                // Show appropriate message
+                if (response.summary.failed === 0) {
+                    showToast(`Successfully synced all ${response.summary.successful} record(s)!`);
+                } else {
+                    showToast(`Synced ${response.summary.successful} records, ${response.summary.failed} failed.`, true);
+                }
+
+            } catch (error) {
+                console.error('Sync error:', error);
+                showToast(`Sync failed: ${error.message}`, true);
+            }
         }
 
-        // Enhanced App Initialization
-        function initApp() {
+        // Authentication Functions
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const userId = document.getElementById('loginUserId').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!userId || !password) {
+                showToast('Please fill in all fields', true);
+                return;
+            }
+            
+            try {
+                showToast('Logging in...');
+                const response = await authAPI.login(userId, password);
+                
+                // Store auth token and user data
+                localStorage.setItem('authToken', response.token);
+                localStorage.setItem('userData', JSON.stringify(response.user));
+                
+                showToast('Login successful!');
+                updateAuthUI(response.user);
+                screenManager.showScreen('homeScreen');
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                showToast(`Login failed: ${error.message}`, true);
+            }
+        }
+
+        async function handleRegister(event) {
+            event.preventDefault();
+            
+            const userData = {
+                userId: document.getElementById('registerUserId').value,
+                name: document.getElementById('registerName').value,
+                phone: document.getElementById('registerPhone').value,
+                village: document.getElementById('registerVillage').value,
+                district: document.getElementById('registerDistrict').value,
+                state: document.getElementById('registerState').value,
+                password: document.getElementById('registerPassword').value
+            };
+            
+            // Validate required fields
+            for (const [key, value] of Object.entries(userData)) {
+                if (!value) {
+                    showToast(`Please fill in ${key.replace(/([A-Z])/g, ' $1').toLowerCase()}`, true);
+                    return;
+                }
+            }
+            
+            try {
+                showToast('Creating account...');
+                const response = await authAPI.register(userData);
+                
+                // Store auth token and user data
+                localStorage.setItem('authToken', response.token);
+                localStorage.setItem('userData', JSON.stringify(response.user));
+                
+                showToast('Registration successful!');
+                updateAuthUI(response.user);
+                screenManager.showScreen('homeScreen');
+                
+            } catch (error) {
+                console.error('Registration error:', error);
+                showToast(`Registration failed: ${error.message}`, true);
+            }
+        }
+
+        function updateAuthUI(user) {
+            if (user) {
+                // Update settings screen
+                document.getElementById('settingsCollectorId').textContent = user.userId;
+                document.getElementById('settingsCollectorName').textContent = user.name;
+                document.getElementById('settingsVillage').textContent = user.village + ', ' + user.district;
+                document.getElementById('settingsAuthStatus').textContent = 'Logged in';
+                document.getElementById('settingsAuthStatus').className = 'text-green-600';
+                document.getElementById('authButton').textContent = 'Logout';
+                document.getElementById('authButton').onclick = handleLogout;
+            } else {
+                // Reset to guest mode
+                document.getElementById('settingsCollectorId').textContent = 'Not logged in';
+                document.getElementById('settingsCollectorName').textContent = 'Guest User';
+                document.getElementById('settingsVillage').textContent = '-';
+                document.getElementById('settingsAuthStatus').textContent = 'Offline Mode';
+                document.getElementById('settingsAuthStatus').className = 'text-orange-600';
+                document.getElementById('authButton').textContent = 'Login';
+                document.getElementById('authButton').onclick = handleAuthAction;
+            }
+        }
+
+        function handleAuthAction() {
+            screenManager.showScreen('loginScreen');
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userData');
+            updateAuthUI(null);
+            showToast('Logged out successfully');
+        }
+
+        function continueWithoutAuth() {
+            screenManager.showScreen('homeScreen');
+            showToast('Using offline mode. Login later to sync data.');
+        }
+
+        async function checkAuthStatus() {
+            const token = localStorage.getItem('authToken');
+            const userData = localStorage.getItem('userData');
+            
+            if (token && userData) {
+                try {
+                    // Verify token is still valid
+                    await authAPI.verifyToken();
+                    const user = JSON.parse(userData);
+                    updateAuthUI(user);
+                    return true;
+                } catch (error) {
+                    console.log('Token expired or invalid, clearing auth data');
+                    localStorage.removeItem('authToken');
+                    localStorage.removeItem('userData');
+                }
+            }
+            
+            return false;
+        }
+
+        async function checkBackendStatus() {
+            try {
+                const response = await fetch(`${API_CONFIG.baseURL.replace('/api/v1', '')}/health`);
+                if (response.ok) {
+                    document.getElementById('backendStatus').textContent = 'Connected';
+                    document.getElementById('backendStatus').className = 'text-green-600';
+                } else {
+                    document.getElementById('backendStatus').textContent = 'Error';
+                    document.getElementById('backendStatus').className = 'text-red-600';
+                }
+            } catch (error) {
+                document.getElementById('backendStatus').textContent = 'Offline';
+                document.getElementById('backendStatus').className = 'text-red-600';
+            }
+        }
+
+        function clearLocalData() {
+            if (confirm('Are you sure you want to clear all local data? This cannot be undone.')) {
+                localStorage.clear();
+                localDB = [];
+                saveDB();
+                updateSyncStatusFooter();
+                showToast('Local data cleared');
+                updateAuthUI(null);
+                location.reload();
+            }
+        }
+
+        // Enhanced App Initialization with Authentication
+        async function initApp() {
             console.log('Initializing Herbal Harvester app...');
             
             try {
@@ -648,7 +1375,7 @@
                 setupEventHandlers();
                 
                 // Initialize phosphor icons
-                if (typeof window.ph !== 'undefined') {
+                if (globalThis.ph !== undefined) {
                     console.log('Phosphor icons loaded successfully');
                 } else {
                     console.warn('Phosphor icons not loaded properly');
@@ -657,9 +1384,39 @@
                 // Show loading screen initially
                 screenManager.showScreen('loadingScreen', false);
                 
-                // Auto-transition to home screen after loading
-                setTimeout(() => {
-                    console.log('Loading complete, transitioning to home screen');
+                // Check existing permissions
+                await permissionManager.checkPermissionStatus();
+                
+                // Check backend status
+                checkBackendStatus();
+                
+                // Auto-transition after loading
+                setTimeout(async () => {
+                    console.log('Loading complete, checking auth and permissions...');
+                    
+                    // Check authentication status
+                    const isAuthenticated = await checkAuthStatus();
+                    
+                    if (!isAuthenticated) {
+                        // Show login screen for first time users
+                        screenManager.showScreen('loginScreen');
+                        return;
+                    }
+                    
+                    // Check if we need to request permissions
+                    const shouldPrompt = await permissionManager.showPermissionPrompt();
+                    
+                    if (shouldPrompt) {
+                        console.log('User agreed to permission requests');
+                        const permissions = await permissionManager.requestAllPermissions();
+                        
+                        if (permissions.camera && permissions.location) {
+                            showToast('All permissions granted! Ready to collect herbs.');
+                        } else {
+                            showToast('Some permissions denied. App functionality may be limited.', true);
+                        }
+                    }
+                    
                     screenManager.showScreen('homeScreen');
                     isAppInitialized = true;
                 }, 2000);
@@ -672,6 +1429,18 @@
 
         // Setup Event Handlers
         function setupEventHandlers() {
+            // Authentication form handlers
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            
+            if (loginForm) {
+                loginForm.addEventListener('submit', handleLogin);
+            }
+            
+            if (registerForm) {
+                registerForm.addEventListener('submit', handleRegister);
+            }
+            
             // Back button handling for Android
             document.addEventListener('backbutton', function(e) {
                 e.preventDefault();
@@ -702,9 +1471,18 @@
             });
         }
 
-        // Enhanced Camera Functions with Error Handling
+        // Enhanced Camera Functions with Permission Checking
         async function startCamera() {
             console.log('Starting camera...');
+            
+            // Check camera permission first
+            if (!permissionManager.permissions.camera.granted) {
+                console.log('Camera permission not granted, requesting...');
+                const granted = await permissionManager.requestCameraPermission();
+                if (!granted) {
+                    return;
+                }
+            }
             
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
                 showToast('Camera not supported on this device.', true);
@@ -738,29 +1516,21 @@
 
             } catch (err) {
                 console.error('Camera Error:', err);
-                let errorMessage = 'Could not access camera.';
                 
-                switch(err.name) {
-                    case 'NotAllowedError':
-                        errorMessage = 'Camera permission denied. Please enable camera access.';
-                        break;
-                    case 'NotFoundError':
-                        errorMessage = 'No camera found on this device.';
-                        break;
-                    case 'NotSupportedError':
-                        errorMessage = 'Camera not supported on this device.';
-                        break;
-                    default:
-                        errorMessage = 'Camera error: ' + err.message;
-                }
+                const errorMessages = {
+                    'NotAllowedError': 'Camera permission denied. Please enable camera access.',
+                    'NotFoundError': 'No camera found on this device.',
+                    'NotSupportedError': 'Camera not supported on this device.'
+                };
                 
+                const errorMessage = errorMessages[err.name] || `Camera error: ${err.message}`;
                 showToast(errorMessage, true);
                 screenManager.showScreen('newCollectionScreen');
             }
         }
 
-        // Enhanced GPS and Timestamp fetching
-        function fetchAndDisplayCameraMetadata() {
+        // Enhanced GPS and Timestamp fetching with permission checking
+        async function fetchAndDisplayCameraMetadata() {
             const gpsEl = document.getElementById('cameraGpsDisplay');
             const timeEl = document.getElementById('cameraTimestampDisplay');
 
@@ -778,8 +1548,14 @@
             timeEl.textContent = `🕒 ${localTimeString}`;
             timeEl.dataset.isoValue = now.toISOString();
 
-            // Fetch GPS location
+            // Fetch GPS location with permission checking
             gpsEl.textContent = '📍 Getting location...';
+            
+            // Check if location permission is granted
+            if (!permissionManager.permissions.location.granted) {
+                gpsEl.textContent = '📍 Location permission needed';
+                return;
+            }
             
             if ('geolocation' in navigator) {
                 const options = {
@@ -793,23 +1569,19 @@
                         const { latitude, longitude, accuracy } = position.coords;
                         const gpsString = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
                         gpsEl.textContent = `📍 ${gpsString}`;
+                        gpsEl.dataset.latitude = latitude;
+                        gpsEl.dataset.longitude = longitude;
                         gpsEl.dataset.accuracy = accuracy;
                         console.log(`GPS accuracy: ${accuracy} meters`);
                     },
                     (error) => {
                         console.error('GPS Error:', error);
-                        let errorMsg = 'Location unavailable';
-                        switch(error.code) {
-                            case error.PERMISSION_DENIED:
-                                errorMsg = 'Location permission denied';
-                                break;
-                            case error.POSITION_UNAVAILABLE:
-                                errorMsg = 'Location unavailable';
-                                break;
-                            case error.TIMEOUT:
-                                errorMsg = 'Location timeout';
-                                break;
-                        }
+                        const errorMessages = {
+                            [error.PERMISSION_DENIED]: 'Location permission denied',
+                            [error.POSITION_UNAVAILABLE]: 'Location unavailable',
+                            [error.TIMEOUT]: 'Location timeout'
+                        };
+                        const errorMsg = errorMessages[error.code] || 'Location unavailable';
                         gpsEl.textContent = `📍 ${errorMsg}`;
                     },
                     options
