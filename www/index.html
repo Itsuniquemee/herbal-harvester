@@ -270,7 +270,7 @@
     <canvas id="photoCanvas" class="hidden"></canvas>
 
     <script>
-        // App State
+        // App State Management
         const DB_KEY = 'herbalCollectionDB';
         const SETTINGS_KEY = 'herbalAppSettings';
         
@@ -281,6 +281,88 @@
         };
 
         let currentStream = null;
+        let isAppInitialized = false;
+
+        // Enhanced Screen Management System
+        class ScreenManager {
+            constructor() {
+                this.currentScreen = 'loadingScreen';
+                this.screens = new Set(['loadingScreen', 'homeScreen', 'newCollectionScreen', 'collectionsScreen', 'settingsScreen', 'cameraScreen']);
+                this.history = [];
+            }
+
+            showScreen(screenId, addToHistory = true) {
+                console.log(`Transitioning from ${this.currentScreen} to ${screenId}`);
+                
+                if (!this.screens.has(screenId)) {
+                    console.error(`Screen ${screenId} not found`);
+                    return false;
+                }
+
+                try {
+                    // Hide all screens
+                    document.querySelectorAll('.app-screen').forEach(screen => {
+                        screen.classList.remove('active');
+                        screen.style.display = 'none';
+                    });
+
+                    // Show target screen
+                    const targetScreen = document.getElementById(screenId);
+                    if (targetScreen) {
+                        targetScreen.style.display = 'flex';
+                        // Use requestAnimationFrame to ensure display change takes effect
+                        requestAnimationFrame(() => {
+                            targetScreen.classList.add('active');
+                        });
+                        
+                        // Add to history for navigation
+                        if (addToHistory && this.currentScreen !== screenId) {
+                            this.history.push(this.currentScreen);
+                        }
+                        
+                        this.currentScreen = screenId;
+                        this.onScreenChanged(screenId);
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error switching screens:', error);
+                    return false;
+                }
+                return false;
+            }
+
+            goBack() {
+                if (this.history.length > 0) {
+                    const previousScreen = this.history.pop();
+                    this.showScreen(previousScreen, false);
+                } else {
+                    this.showScreen('homeScreen', false);
+                }
+            }
+
+            onScreenChanged(screenId) {
+                // Handle screen-specific initialization
+                switch(screenId) {
+                    case 'collectionsScreen':
+                        renderCollections();
+                        break;
+                    case 'homeScreen':
+                        updateSyncStatusFooter();
+                        break;
+                    case 'cameraScreen':
+                        // Camera initialization handled separately
+                        break;
+                }
+            }
+        }
+
+        // Create global screen manager instance
+        const screenManager = new ScreenManager();
+
+        // Global navigation function (used by onclick handlers)
+        function showScreen(screenId) {
+            return screenManager.showScreen(screenId);
+        }
 
         // Utility Functions
         function generateUUID() {
@@ -288,16 +370,6 @@
                 var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
                 return v.toString(16);
             });
-        }
-
-        function showScreen(screenId) {
-            document.querySelectorAll('.app-screen').forEach(screen => {
-                screen.classList.remove('active');
-            });
-            const activeScreen = document.getElementById(screenId);
-            if (activeScreen) {
-                activeScreen.classList.add('active');
-            }
         }
 
         function showToast(message, isError = false) {
@@ -366,57 +438,7 @@
             showScreen('newCollectionScreen');
         }
 
-        async function startCamera() {
-            showScreen('cameraScreen');
-            fetchAndDisplayCameraMetadata();
 
-            const video = document.getElementById('cameraFeed');
-            if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-                try {
-                    currentStream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: 'environment' } 
-                    });
-                    video.srcObject = currentStream;
-                } catch (err) {
-                    console.error("Camera Error:", err);
-                    showToast('Could not access camera. Check permissions.', true);
-                    showScreen('newCollectionScreen');
-                }
-            } else {
-                showToast('Camera not supported on this device.', true);
-                showScreen('newCollectionScreen');
-            }
-        }
-
-        function fetchAndDisplayCameraMetadata() {
-            const gpsEl = document.getElementById('cameraGpsDisplay');
-            const timeEl = document.getElementById('cameraTimestampDisplay');
-
-            // Time
-            const now = new Date();
-            const localTimeString = now.toLocaleString();
-            timeEl.textContent = `🕒 ${localTimeString}`;
-            timeEl.dataset.isoValue = now.toISOString();
-
-            // GPS
-            gpsEl.textContent = '📍 Getting location...';
-            
-            if ('geolocation' in navigator) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const { latitude, longitude } = position.coords;
-                        const gpsString = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-                        gpsEl.textContent = `📍 ${gpsString}`;
-                    },
-                    (error) => {
-                        gpsEl.textContent = '📍 Location unavailable';
-                    },
-                    { enableHighAccuracy: true, timeout: 10000 }
-                );
-            } else {
-                gpsEl.textContent = '📍 GPS not supported';
-            }
-        }
 
         function stopCameraFeed() {
             if (currentStream) {
@@ -427,73 +449,115 @@
 
         function cancelCamera() {
             stopCameraFeed();
-            showScreen('newCollectionScreen');
+            screenManager.showScreen('newCollectionScreen');
         }
 
         function takePhoto() {
-            const video = document.getElementById('cameraFeed');
-            const canvas = document.getElementById('photoCanvas');
-            const context = canvas.getContext('2d');
+            try {
+                const video = document.getElementById('cameraFeed');
+                const canvas = document.getElementById('photoCanvas');
+                const context = canvas.getContext('2d');
 
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+                // Ensure video is playing
+                if (video.videoWidth === 0 || video.videoHeight === 0) {
+                    showToast('Please wait for camera to load completely.', true);
+                    return;
+                }
 
-            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
 
-            const base64Data = canvas.toDataURL('image/jpeg', 0.8);
+                // Draw the video frame to canvas
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            stopCameraFeed();
+                // Convert to base64 with compression
+                const base64Data = canvas.toDataURL('image/jpeg', 0.7);
 
-            // Populate form with captured data
-            document.getElementById('photoBase64Input').value = base64Data;
-            document.getElementById('photoPreview').src = base64Data;
-            document.getElementById('photoPreview').classList.remove('hidden');
+                stopCameraFeed();
 
-            const cameraGpsText = document.getElementById('cameraGpsDisplay').textContent.replace('📍 ', '');
-            const cameraTimeText = document.getElementById('cameraTimestampDisplay').textContent.replace('🕒 ', '');
-            const cameraTimeISO = document.getElementById('cameraTimestampDisplay').dataset.isoValue;
-            
-            document.getElementById('gpsInput').value = cameraGpsText;
-            document.getElementById('timestampInput').value = cameraTimeText;
+                // Populate form with captured data
+                document.getElementById('photoBase64Input').value = base64Data;
+                document.getElementById('photoPreview').src = base64Data;
+                document.getElementById('photoPreview').classList.remove('hidden');
 
-            showScreen('newCollectionScreen');
+                // Get GPS and timestamp from camera screen
+                const cameraGpsText = document.getElementById('cameraGpsDisplay').textContent.replace('📍 ', '');
+                const cameraTimeText = document.getElementById('cameraTimestampDisplay').textContent.replace('🕒 ', '');
+                
+                document.getElementById('gpsInput').value = cameraGpsText;
+                document.getElementById('timestampInput').value = cameraTimeText;
+
+                showToast('Photo captured successfully!');
+                screenManager.showScreen('newCollectionScreen');
+                
+            } catch (error) {
+                console.error('Error taking photo:', error);
+                showToast('Error capturing photo. Please try again.', true);
+            }
         }
 
         function saveCollection() {
-            const species = document.getElementById('speciesInput').value;
-            if (!species) {
-                showToast('Please select a herb name.', true);
-                return;
+            try {
+                // Validation
+                const species = document.getElementById('speciesInput').value;
+                if (!species) {
+                    showToast('Please select a herb name.', true);
+                    return;
+                }
+                
+                const base64Photo = document.getElementById('photoBase64Input').value;
+                if (!base64Photo) {
+                    showToast('Please take a photo first.', true);
+                    return;
+                }
+                
+                const gpsValue = document.getElementById('gpsInput').value;
+                if (!gpsValue || gpsValue === 'Getting location...' || gpsValue === 'Location unavailable') {
+                    showToast('Please wait for GPS location or try taking photo again.', true);
+                    return;
+                }
+                
+                const timestamp = document.getElementById('timestampInput').value;
+                if (!timestamp) {
+                    showToast('Please take a photo to capture timestamp.', true);
+                    return;
+                }
+
+                const gpsCoords = gpsValue.split(',');
+                
+                const collection = {
+                    id: generateUUID(),
+                    species: species,
+                    weather: document.getElementById('weatherInput').value || "Not specified",
+                    timestamp: timestamp,
+                    location: {
+                        latitude: gpsCoords[0] ? gpsCoords[0].trim() : "N/A",
+                        longitude: gpsCoords[1] ? gpsCoords[1].trim() : "N/A"
+                    },
+                    photo: base64Photo,
+                    status: 'pending',
+                    createdAt: new Date().toISOString()
+                };
+
+                localDB.unshift(collection);
+                saveDB();
+
+                showToast('Collection saved locally!');
+                
+                // Clear form after successful save
+                document.getElementById('speciesInput').value = '';
+                document.getElementById('weatherInput').value = '';
+                document.getElementById('photoBase64Input').value = '';
+                document.getElementById('photoPreview').classList.add('hidden');
+                document.getElementById('gpsInput').value = '';
+                document.getElementById('timestampInput').value = '';
+                
+                screenManager.showScreen('homeScreen');
+                
+            } catch (error) {
+                console.error('Error saving collection:', error);
+                showToast('Error saving collection. Please try again.', true);
             }
-            
-            const base64Photo = document.getElementById('photoBase64Input').value;
-            if (!base64Photo) {
-                showToast('Please take a photo.', true);
-                return;
-            }
-            
-            const gpsCoords = document.getElementById('gpsInput').value.split(',');
-            const timestamp = document.getElementById('timestampInput').value;
-
-            const collection = {
-                id: generateUUID(),
-                species: species,
-                weather: document.getElementById('weatherInput').value || "Not specified",
-                timestamp: timestamp,
-                location: {
-                    latitude: gpsCoords[0] ? gpsCoords[0].trim() : "N/A",
-                    longitude: gpsCoords[1] ? gpsCoords[1].trim() : "N/A"
-                },
-                photo: base64Photo,
-                status: 'pending',
-                createdAt: new Date().toISOString()
-            };
-
-            localDB.unshift(collection);
-            saveDB();
-
-            showToast('Collection saved locally!');
-            showScreen('homeScreen');
         }
 
         function renderCollections() {
@@ -530,46 +594,246 @@
             const item = localDB.find(i => i.id === id);
             if (!item) return;
 
-            const photoHtml = item.photo 
-                ? `<img src="${item.photo}" alt="${item.species}" class="w-full rounded-lg shadow-md object-cover mb-4 max-h-64">` 
-                : `<p class="text-center text-gray-500 p-4 bg-gray-100 rounded-lg">No photo available</p>`;
+            const details = [
+                `Species: ${item.species}`,
+                `Weather: ${item.weather}`,
+                `Location: ${item.location.latitude}, ${item.location.longitude}`,
+                `Time: ${item.timestamp}`,
+                `Status: ${item.status}`,
+                `Created: ${new Date(item.createdAt).toLocaleString()}`
+            ].join('\n');
 
-            alert(`Collection Details:\n\nSpecies: ${item.species}\nWeather: ${item.weather}\nLocation: ${item.location.latitude}, ${item.location.longitude}\nTime: ${item.timestamp}`);
+            alert(`Collection Details:\n\n${details}`);
         }
 
         function triggerSync() {
-            showToast('Sync functionality would upload pending records to server');
-            // Simulate sync
+            const pendingRecords = localDB.filter(item => item.status === 'pending');
+            
+            if (pendingRecords.length === 0) {
+                showToast('No pending records to sync.');
+                return;
+            }
+            
+            showToast(`Syncing ${pendingRecords.length} record(s)...`);
+            
+            // Simulate sync process
             setTimeout(() => {
-                localDB.forEach(item => {
-                    if (item.status === 'pending') {
-                        item.status = 'synced';
+                try {
+                    for (const item of localDB) {
+                        if (item.status === 'pending') {
+                            item.status = 'synced';
+                            item.syncedAt = new Date().toISOString();
+                        }
                     }
-                });
-                saveDB();
-                showToast('Sync completed!');
+                    saveDB();
+                    showToast(`Successfully synced ${pendingRecords.length} record(s)!`);
+                } catch (error) {
+                    console.error('Sync error:', error);
+                    showToast('Sync failed. Will retry later.', true);
+                }
             }, 2000);
         }
 
-        // Initialize app
+        // Enhanced App Initialization
         function initApp() {
-            loadDB();
-            loadSettings();
-            updateSyncStatusFooter();
+            console.log('Initializing Herbal Harvester app...');
             
-            // Hide loading screen after 2 seconds
-            setTimeout(() => {
-                showScreen('homeScreen');
-            }, 2000);
+            try {
+                // Load data and settings
+                loadDB();
+                loadSettings();
+                updateSyncStatusFooter();
+                
+                // Set up event handlers
+                setupEventHandlers();
+                
+                // Initialize phosphor icons
+                if (typeof window.ph !== 'undefined') {
+                    console.log('Phosphor icons loaded successfully');
+                } else {
+                    console.warn('Phosphor icons not loaded properly');
+                }
+                
+                // Show loading screen initially
+                screenManager.showScreen('loadingScreen', false);
+                
+                // Auto-transition to home screen after loading
+                setTimeout(() => {
+                    console.log('Loading complete, transitioning to home screen');
+                    screenManager.showScreen('homeScreen');
+                    isAppInitialized = true;
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error during app initialization:', error);
+                showToast('Error initializing app. Please refresh.', true);
+            }
+        }
 
-            // Update collections screen when shown
-            document.getElementById('collectionsScreen').addEventListener('click', function() {
-                renderCollections();
+        // Setup Event Handlers
+        function setupEventHandlers() {
+            // Back button handling for Android
+            document.addEventListener('backbutton', function(e) {
+                e.preventDefault();
+                if (screenManager.currentScreen === 'homeScreen') {
+                    // Exit app or show confirmation
+                    if (confirm('Do you want to exit the app?')) {
+                        navigator.app.exitApp();
+                    }
+                } else {
+                    screenManager.goBack();
+                }
+            }, false);
+            
+            // Handle settings save button properly
+            const saveSettingsBtn = document.querySelector('#settingsScreen button[onclick="showScreen(\'homeScreen\')"]');
+            if (saveSettingsBtn) {
+                saveSettingsBtn.onclick = function() {
+                    saveSettings();
+                };
+            }
+            
+            // Enhanced error handling for camera
+            window.addEventListener('error', function(e) {
+                console.error('Global error:', e.error);
+                if (e.error && e.error.name === 'NotAllowedError') {
+                    showToast('Camera permission denied. Please enable camera access.', true);
+                }
             });
         }
 
-        // Start the app
-        document.addEventListener('DOMContentLoaded', initApp);
+        // Enhanced Camera Functions with Error Handling
+        async function startCamera() {
+            console.log('Starting camera...');
+            
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                showToast('Camera not supported on this device.', true);
+                return;
+            }
+
+            try {
+                screenManager.showScreen('cameraScreen');
+                fetchAndDisplayCameraMetadata();
+
+                const video = document.getElementById('cameraFeed');
+                
+                // Request camera with fallback options
+                const constraints = {
+                    video: {
+                        facingMode: { ideal: 'environment' },
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = currentStream;
+                
+                video.onloadedmetadata = () => {
+                    video.play().catch(e => {
+                        console.error('Video play error:', e);
+                        showToast('Error starting camera preview.', true);
+                    });
+                };
+
+            } catch (err) {
+                console.error('Camera Error:', err);
+                let errorMessage = 'Could not access camera.';
+                
+                switch(err.name) {
+                    case 'NotAllowedError':
+                        errorMessage = 'Camera permission denied. Please enable camera access.';
+                        break;
+                    case 'NotFoundError':
+                        errorMessage = 'No camera found on this device.';
+                        break;
+                    case 'NotSupportedError':
+                        errorMessage = 'Camera not supported on this device.';
+                        break;
+                    default:
+                        errorMessage = 'Camera error: ' + err.message;
+                }
+                
+                showToast(errorMessage, true);
+                screenManager.showScreen('newCollectionScreen');
+            }
+        }
+
+        // Enhanced GPS and Timestamp fetching
+        function fetchAndDisplayCameraMetadata() {
+            const gpsEl = document.getElementById('cameraGpsDisplay');
+            const timeEl = document.getElementById('cameraTimestampDisplay');
+
+            // Set timestamp immediately
+            const now = new Date();
+            const localTimeString = now.toLocaleString('en-IN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            });
+            timeEl.textContent = `🕒 ${localTimeString}`;
+            timeEl.dataset.isoValue = now.toISOString();
+
+            // Fetch GPS location
+            gpsEl.textContent = '📍 Getting location...';
+            
+            if ('geolocation' in navigator) {
+                const options = {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 60000
+                };
+                
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude, accuracy } = position.coords;
+                        const gpsString = `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+                        gpsEl.textContent = `📍 ${gpsString}`;
+                        gpsEl.dataset.accuracy = accuracy;
+                        console.log(`GPS accuracy: ${accuracy} meters`);
+                    },
+                    (error) => {
+                        console.error('GPS Error:', error);
+                        let errorMsg = 'Location unavailable';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMsg = 'Location permission denied';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMsg = 'Location unavailable';
+                                break;
+                            case error.TIMEOUT:
+                                errorMsg = 'Location timeout';
+                                break;
+                        }
+                        gpsEl.textContent = `📍 ${errorMsg}`;
+                    },
+                    options
+                );
+            } else {
+                gpsEl.textContent = '📍 GPS not supported';
+            }
+        }
+
+        // Start the app when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            // DOM already loaded
+            initApp();
+        }
+
+        // Additional initialization for Capacitor/Cordova
+        document.addEventListener('deviceready', function() {
+            console.log('Device is ready');
+            if (!isAppInitialized) {
+                initApp();
+            }
+        }, false);
     </script>
 </body>
 </html>
